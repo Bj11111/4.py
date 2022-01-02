@@ -1,7 +1,7 @@
 #--------------------Game developed by USAMA EJAZ-----------------------
 #-------------------------For Open Use----------------------------
 
-# from tkinter import *
+from tkinter import *
 import random
 from tkinter import messagebox
 x=0
@@ -161,4 +161,3 @@ def con():
         if not(i in nums) and button[i]['text']!='O' and button[i]['text']!='X':
             break
 menu()
-
