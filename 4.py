@@ -1,3 +1,4 @@
+
 def test_print_board():
     board = [None, None, None,
              None, None, None,
@@ -13,7 +14,7 @@ def test_print_board():
                 "     |     |     \n"
                 "  7  |  8  |  9  \n"
                 "     |     |     \n")
-    result in = print_board(board)
+    result  = print_board(board)
     assert result == expected
     board = ['o', None, 'o',
              'x', None, None,
