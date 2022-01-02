@@ -1,7 +1,7 @@
 #--------------------Game developed by USAMA EJAZ-----------------------
 #-------------------------For Open Use----------------------------
 
-from tkinter import *
+# from tkinter import *
 import random
 from tkinter import messagebox
 x=0
