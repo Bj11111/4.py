@@ -1,175 +1,210 @@
-# 導入 tkinter 模塊
-從 tkinter 導入 *
-導入 tkinter。消息框 作為 msg
-# 設置窗口
-根 =  Tk ()
-根。幾何（'500x550'）
-根。最大尺寸( 500 , 550 )
-根。最小尺寸( 500 , 550 )
-# 定義了一些變量
-turn  =  2  # 對於 acucessig 玩家回合。如果是偶數，則玩家 1 和奇數玩家 2
-board  = [ "-" , "-" , "-" ,
-         "-" , "-" , "-" ,
-         "-" , "-" , "-" ]
-stop_list  = [] # 每當遊戲獲勝時停止的列表，該列表中附加了停止
-根。配置（bg = '黃色'）
+from tkinter import *
+import numpy as np
 
-def  display_board ():
-    '''該函數用於畫板'''
-    打印（板[ 0 ] +  ' | '  + 板[ 1 ] +  ' | '  +板[ 2 ]）
-    打印（板[ 3 ] +  ' | '  + 板[ 4 ] +  ' | '  + 板[ 5 ]）
-    打印（板[ 6 ] +  ' | '  + 板[ 7 ] +  ' | '  + 板[ 8 ]）
-
-def  check_winner ():
-    '''用於檢查獲勝者的函數'''
-    # 檢查行
-    如果 board [ 0 ] ==  board [ 1 ] == board [ 2 ]和 board [ 0 ] != '-'：
-        打印（f' { board [ 0 ] }是贏家'）
-        停止列表。追加（'停止'）
-    elif  board [ 3 ] ==  board [ 4 ] == board [ 5 ]和 board [ 3 ] != '-'：
-        打印（f' { board [ 3 ] }是贏家'）
-        停止列表。追加（'停止'）
-    elif  board [ 6 ] ==  board [ 7 ] == board [ 8 ]和 board [ 6 ] != '-'：
-        打印（f' { board [ 6 ] }是贏家'）
-        停止列表。追加（'停止'）
-
-    # 檢查列
-    對於 我 在 範圍（3）：
-        如果 board [ i ] ==  board [ i + 3 ] ==  board [ i + 6 ]並且 board [ i ] != '-'：
-            打印（f' { board [ i ] } is winnner'）
-            停止列表。追加（'停止'）
-
-    # 對於對角線
-    if (( board [ 0 ] ==  board [ 4 ] ==  board [ 8 ]) or ( board [ 2 ] ==  board [ 4 ] ==  board [ 6 ])) and  board [ 4 ] != '-'：
-        打印（f' { board [ 4 ] }是贏家'）
-        停止列表。追加（'停止'）
-
-def  check_tie ():
-    ''''檢查匹配的功能是否平局。'''
-    如果 len ( stop_list ) == 0 並且 '-'  not  in  board : # len()==0 表示停止不在列表中或 '-' 不在面板中表示所有
-        # 空格已填滿
-        打印（'比賽是平局'）
-        停止列表。追加（'領帶'）
-
-def  button_player1（按鈕）：
-    '''此功能用於改變點擊X後按鈕的樣式'''
-    按鈕。更新()
-    按鈕[ 'fg' ] =  '黃色'
-    按鈕[ '文本' ] =  'X'
-    按鈕[ 'bg' ] =  '藍色'
-
-def  button_player2（按鈕）：
-    '''該函數用於改變玩家O點擊後按鈕的樣式'''
-    按鈕。更新()
-    按鈕[ 'fg' ] =  '黃色'
-    按鈕[ '文本' ] =  'O'
-    按鈕[ 'bg' ] =  '紅色'
-
-def  reset_button_style（按鈕）：
-    '''這個功能會在遊戲重啟時清除按鈕上的所有效果'''
-    按鈕。更新()
-    按鈕[ 'fg' ] =  '白色'
-    按鈕[ '文本' ] =  '-'
-    按鈕[ 'bg' ] =  '黑色'
+size_of_board = 600
+symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
+symbol_thickness = 50
+symbol_X_color = '#EE4035'
+symbol_O_color = '#0492CF'
+Green_color = '#7BC043'
 
 
-def  clear_list_and_reset_button_text ():
-    '''此函數用於通過將所有變量設置為其初始位置來再次玩遊戲'''
-    # 該函數僅在有人獲勝或比賽平局時運行
-    button_list  = [ b1 , b2 , b3 , b4 , b5 , b6 , b7 , b8 , b9 ]
-    對於 我 在 範圍（9）：
-        reset_button_style ( button_list [ i ]) # 重置所有按鈕的樣式
-        board [ i ] =  '-'  # 再次設置 board
-    印刷（板）
-    turn_indicator。更新()
-    turn_indicator [ 'text' ] =  'Turn: Player 1'  # 最初輪到第一個玩家
-    停止列表。clear () #清空列表
+class Tic_Tac_Toe():
+    # ------------------------------------------------------------------
+    # Initialization Functions:
+    # ------------------------------------------------------------------
+    def __init__(self):
+        self.window = Tk()
+        self.window.title('Tic-Tac-Toe')
+        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
+        self.canvas.pack()
+        # Input from user in form of clicks
+        self.window.bind('<Button-1>', self.click)
+
+        self.initialize_board()
+        self.player_X_turns = True
+        self.board_status = np.zeros(shape=(3, 3))
+
+        self.player_X_starts = True
+        self.reset_board = False
+        self.gameover = False
+        self.tie = False
+        self.X_wins = False
+        self.O_wins = False
+
+        self.X_score = 0
+        self.O_score = 0
+        self.tie_score = 0
+
+    def mainloop(self):
+        self.window.mainloop()
+
+    def initialize_board(self):
+        for i in range(2):
+            self.canvas.create_line((i + 1) * size_of_board / 3, 0, (i + 1) * size_of_board / 3, size_of_board)
+
+        for i in range(2):
+            self.canvas.create_line(0, (i + 1) * size_of_board / 3, size_of_board, (i + 1) * size_of_board / 3)
+
+    def play_again(self):
+        self.initialize_board()
+        self.player_X_starts = not self.player_X_starts
+        self.player_X_turns = self.player_X_starts
+        self.board_status = np.zeros(shape=(3, 3))
+
+    # ------------------------------------------------------------------
+    # Drawing Functions:
+    # The modules required to draw required game based object on canvas
+    # ------------------------------------------------------------------
+
+    def draw_O(self, logical_position):
+        logical_position = np.array(logical_position)
+        # logical_position = grid value on the board
+        # grid_position = actual pixel values of the center of the grid
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
+                                outline=symbol_O_color)
+
+    def draw_X(self, logical_position):
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
+                                fill=symbol_X_color)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+                                fill=symbol_X_color)
+
+    def display_gameover(self):
+
+        if self.X_wins:
+            self.X_score += 1
+            text = 'Winner: Player 1 (X)'
+            color = symbol_X_color
+        elif self.O_wins:
+            self.O_score += 1
+            text = 'Winner: Player 2 (O)'
+            color = symbol_O_color
+        else:
+            self.tie_score += 1
+            text = 'Its a tie'
+            color = 'gray'
+
+        self.canvas.delete("all")
+        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
+
+        score_text = 'Scores \n'
+        self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
+                                text=score_text)
+
+        score_text = 'Player 1 (X) : ' + str(self.X_score) + '\n'
+        score_text += 'Player 2 (O): ' + str(self.O_score) + '\n'
+        score_text += 'Tie                    : ' + str(self.tie_score)
+        self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
+                                text=score_text)
+        self.reset_board = True
+
+        score_text = 'Click to play again \n'
+        self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
+                                text=score_text)
+
+    # ------------------------------------------------------------------
+    # Logical Functions:
+    # The modules required to carry out game logic
+    # ------------------------------------------------------------------
+
+    def convert_logical_to_grid_position(self, logical_position):
+        logical_position = np.array(logical_position, dtype=int)
+        return (size_of_board / 3) * logical_position + size_of_board / 6
+
+    def convert_grid_to_logical_position(self, grid_position):
+        grid_position = np.array(grid_position)
+        return np.array(grid_position // (size_of_board / 3), dtype=int)
+
+    def is_grid_occupied(self, logical_position):
+        if self.board_status[logical_position[0]][logical_position[1]] == 0:
+            return False
+        else:
+            return True
+
+    def is_winner(self, player):
+
+        player = -1 if player == 'X' else 1
+
+        # Three in a row
+        for i in range(3):
+            if self.board_status[i][0] == self.board_status[i][1] == self.board_status[i][2] == player:
+                return True
+            if self.board_status[0][i] == self.board_status[1][i] == self.board_status[2][i] == player:
+                return True
+
+        # Diagonals
+        if self.board_status[0][0] == self.board_status[1][1] == self.board_status[2][2] == player:
+            return True
+
+        if self.board_status[0][2] == self.board_status[1][1] == self.board_status[2][0] == player:
+            return True
+
+        return False
+
+    def is_tie(self):
+
+        r, c = np.where(self.board_status == 0)
+        tie = False
+        if len(r) == 0:
+            tie = True
+
+        return tie
+
+    def is_gameover(self):
+        # Either someone wins or all grid occupied
+        self.X_wins = self.is_winner('X')
+        if not self.X_wins:
+            self.O_wins = self.is_winner('O')
+
+        if not self.O_wins:
+            self.tie = self.is_tie()
+
+        gameover = self.X_wins or self.O_wins or self.tie
+
+        if self.X_wins:
+            print('X wins')
+        if self.O_wins:
+            print('O wins')
+        if self.tie:
+            print('Its a tie')
+
+        return gameover
 
 
 
-def  update_board ( position , button ):
-    乙1。更新()
-    全球 轉向
-    # 玩家 1 輪偶數
-    如果 轉% 2 == 0：
-        # 更新窗口上的玩家回合標籤
-        turn_indicator。更新()
-        turn_indicator [ 'text' ] =  '回合：玩家 2'
-        if  board [ position - 1 ] ==  '-' : # 檢查玩家位置的條件是否為空。'-' 表示空
-            按鈕。更新()
-            button_player1 ( button ) # 點擊時調用按鈕樣式改變函數
-            board [ position - 1 ] =  'X'  # 在船上更新位置
-            check_winner () # 每次點擊後檢查獲勝者
-            check_tie () # 每次點擊後檢查tie
-            if  'stop'  in  stop_list : # 每當玩家贏得獲勝者檢查時，函數將在空列表中添加停止
-                留言。showinfo ( 'Winner' , 'Congratulations .... Player 1 wins. \n Well play ' )
-                打印（轉）
-                clear_list_and_reset_button_text ()
-            elif  'tie'  in  stop_list : # 每當 match 為 tie 時，chek for tie 函數將在空列表中添加 tie
-                留言。showinfo ( 'Tie' , 'Ohh!.... The match is tie' )
-                clear_list_and_reset_button_text ()
-            else : # 如果什麼都沒有發生，那麼玩家轉身
-                停止列表。清除()
-                轉 +=  1
-        else : # 如果位置不為空則顯示錯誤
-            留言。showinfo ( 'Eroor!' , "請不要試圖誇大立場.." )
 
-    # Odd 指的是第二個玩家
-    elif 轉% 2 != 0 :
-        # 更新玩家指示器標籤
-        turn_indicator。更新()
-        turn_indicator [ 'text' ] =  '回合：玩家 1'
-        if  board [ position - 1 ] == '-' : # 檢查玩家位置的條件是否為空。'-' 表示空
-            打印（'玩家2回合'）
-            button_player2 ( button ) # 點擊時調用按鈕樣式改變函數
-            board [ position - 1 ] =  'O'  # 在後台更新board上的位置
-            check_winner () # 檢查獲勝者，如果有人獲勝，則此函數將在列表中添加停止
-            check_tie () # 檢查領帶
-            # 檢查停止或平局
-            如果 在stop_list 中“停止” ： 
-                留言。showinfo ( 'info' , '玩家 2 是贏家' )
-                clear_list_and_reset_button_text ()
-                轉+= 1
-            elif  'tie' 在 stop_list 中：
-                留言。showinfo ( 'Tie' , 'Ohh!.... The match is tie' )
-                clear_list_and_reset_button_text ()
-            else : # 如果什麼都沒有發生，那麼通過使偶數變為奇數來改變轉彎，反之亦然
-                停止列表。清除()
-                轉 +=  1
-        其他：
-            留言。showinfo ( 'Eroor!' , "請不要試圖誇大立場.." )
 
-# 窗口的樣式從這裡開始
-標籤( root , text = 'Welcome in Tic Tac Toe Game' , font = 'Arial 25 bold' , fg = 'black' , bg = 'orange' )。包（稻穀= 4）
+    def click(self, event):
+        grid_position = [event.x, event.y]
+        logical_position = self.convert_grid_to_logical_position(grid_position)
 
-turn_indicator  =  Label ( root , text = 'Turn: Player 1' , font = 'MVBoli 19 bold' )
-turn_indicator。包()
-# 第一幀
-f1  = 框架（根，寬度= 450，高度= 100，bg = '黃色'）
-f1。包（稻穀= 10）
-b1  =  Button ( f1 , text = board [ 0 ], width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 1 , b1 ))
-乙1。包（邊=左，padx = 4）
-b2  =  Button ( f1 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 2 , b2 ))
-乙2。包（邊=左，padx = 4）
-b3  =  Button ( f1 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 3 , b3 ))
-乙3。包()
-# 第二幀
-f2  = 框架（根，寬度= 450，高度= 100，bg = '黃色'）
-f2 . 包（稻穀= 10）
-b4  =  Button ( f2 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 4 , b4 ))
-b4 . 包（邊=左，padx = 4）
-b5  =  Button ( f2 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 5 , b5 ))
-乙5。包（邊=左，padx = 4）
-b6  =  Button ( f2 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 6 , b6 ))
-乙6。包()
-# 第三幀
-f3  = 框架（根，寬度= 450，高度= 100，bg = '黃色'）
-f3 . 包（稻穀= 10）
-b7  =  Button ( f3 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 7 , b7 ))
-乙7。包（邊=左，padx = 4）
-b8  =  Button ( f3 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 8 , b8 ))
-b8 . 包（邊=左，padx = 4）
-b9  =  Button ( f3 , text = '-' , width = 3 , font = 'Arial 48 bold' , bg = 'black' , fg = 'white' ,浮雕= GROOVE , bd = 4 , command = lambda : update_board ( 9 , b9 ))
-乙9。包()
+        if not self.reset_board:
+            if self.player_X_turns:
+                if not self.is_grid_occupied(logical_position):
+                    self.draw_X(logical_position)
+                    self.board_status[logical_position[0]][logical_position[1]] = -1
+                    self.player_X_turns = not self.player_X_turns
+            else:
+                if not self.is_grid_occupied(logical_position):
+                    self.draw_O(logical_position)
+                    self.board_status[logical_position[0]][logical_position[1]] = 1
+                    self.player_X_turns = not self.player_X_turns
 
-根。主循環（）
+            # Check if game is concluded
+            if self.is_gameover():
+                self.display_gameover()
+                # print('Done')
+        else:  # Play Again
+            self.canvas.delete("all")
+            self.play_again()
+            self.reset_board = False
+
+
+game_instance = Tic_Tac_Toe()
+game_instance.mainloop()
