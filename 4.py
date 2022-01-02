@@ -1,210 +1,164 @@
+#--------------------Game developed by USAMA EJAZ-----------------------
+#-------------------------For Open Use----------------------------
+
 from tkinter import *
-import numpy as np
-
-size_of_board = 600
-symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
-symbol_thickness = 50
-symbol_X_color = '#EE4035'
-symbol_O_color = '#0492CF'
-Green_color = '#7BC043'
-
-
-class Tic_Tac_Toe():
-    # ------------------------------------------------------------------
-    # Initialization Functions:
-    # ------------------------------------------------------------------
-    def __init__(self):
-        self.window = Tk()
-        self.window.title('Tic-Tac-Toe')
-        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
-        self.canvas.pack()
-        # Input from user in form of clicks
-        self.window.bind('<Button-1>', self.click)
-
-        self.initialize_board()
-        self.player_X_turns = True
-        self.board_status = np.zeros(shape=(3, 3))
-
-        self.player_X_starts = True
-        self.reset_board = False
-        self.gameover = False
-        self.tie = False
-        self.X_wins = False
-        self.O_wins = False
-
-        self.X_score = 0
-        self.O_score = 0
-        self.tie_score = 0
-
-    def mainloop(self):
-        self.window.mainloop()
-
-    def initialize_board(self):
-        for i in range(2):
-            self.canvas.create_line((i + 1) * size_of_board / 3, 0, (i + 1) * size_of_board / 3, size_of_board)
-
-        for i in range(2):
-            self.canvas.create_line(0, (i + 1) * size_of_board / 3, size_of_board, (i + 1) * size_of_board / 3)
-
-    def play_again(self):
-        self.initialize_board()
-        self.player_X_starts = not self.player_X_starts
-        self.player_X_turns = self.player_X_starts
-        self.board_status = np.zeros(shape=(3, 3))
-
-    # ------------------------------------------------------------------
-    # Drawing Functions:
-    # The modules required to draw required game based object on canvas
-    # ------------------------------------------------------------------
-
-    def draw_O(self, logical_position):
-        logical_position = np.array(logical_position)
-        # logical_position = grid value on the board
-        # grid_position = actual pixel values of the center of the grid
-        grid_position = self.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
-                                outline=symbol_O_color)
-
-    def draw_X(self, logical_position):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
-
-    def display_gameover(self):
-
-        if self.X_wins:
-            self.X_score += 1
-            text = 'Winner: Player 1 (X)'
-            color = symbol_X_color
-        elif self.O_wins:
-            self.O_score += 1
-            text = 'Winner: Player 2 (O)'
-            color = symbol_O_color
-        else:
-            self.tie_score += 1
-            text = 'Its a tie'
-            color = 'gray'
-
-        self.canvas.delete("all")
-        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
-
-        score_text = 'Scores \n'
-        self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
-                                text=score_text)
-
-        score_text = 'Player 1 (X) : ' + str(self.X_score) + '\n'
-        score_text += 'Player 2 (O): ' + str(self.O_score) + '\n'
-        score_text += 'Tie                    : ' + str(self.tie_score)
-        self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
-                                text=score_text)
-        self.reset_board = True
-
-        score_text = 'Click to play again \n'
-        self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
-                                text=score_text)
-
-    # ------------------------------------------------------------------
-    # Logical Functions:
-    # The modules required to carry out game logic
-    # ------------------------------------------------------------------
-
-    def convert_logical_to_grid_position(self, logical_position):
-        logical_position = np.array(logical_position, dtype=int)
-        return (size_of_board / 3) * logical_position + size_of_board / 6
-
-    def convert_grid_to_logical_position(self, grid_position):
-        grid_position = np.array(grid_position)
-        return np.array(grid_position // (size_of_board / 3), dtype=int)
-
-    def is_grid_occupied(self, logical_position):
-        if self.board_status[logical_position[0]][logical_position[1]] == 0:
-            return False
-        else:
-            return True
-
-    def is_winner(self, player):
-
-        player = -1 if player == 'X' else 1
-
-        # Three in a row
-        for i in range(3):
-            if self.board_status[i][0] == self.board_status[i][1] == self.board_status[i][2] == player:
-                return True
-            if self.board_status[0][i] == self.board_status[1][i] == self.board_status[2][i] == player:
-                return True
-
-        # Diagonals
-        if self.board_status[0][0] == self.board_status[1][1] == self.board_status[2][2] == player:
-            return True
-
-        if self.board_status[0][2] == self.board_status[1][1] == self.board_status[2][0] == player:
-            return True
-
-        return False
-
-    def is_tie(self):
-
-        r, c = np.where(self.board_status == 0)
-        tie = False
-        if len(r) == 0:
-            tie = True
-
-        return tie
-
-    def is_gameover(self):
-        # Either someone wins or all grid occupied
-        self.X_wins = self.is_winner('X')
-        if not self.X_wins:
-            self.O_wins = self.is_winner('O')
-
-        if not self.O_wins:
-            self.tie = self.is_tie()
-
-        gameover = self.X_wins or self.O_wins or self.tie
-
-        if self.X_wins:
-            print('X wins')
-        if self.O_wins:
-            print('O wins')
-        if self.tie:
-            print('Its a tie')
-
-        return gameover
+import random
+from tkinter import messagebox
+x=0
+i=100
+nums=[]
+button=[]
+check=False
+win2=2
+def menu():
+    global win2
+    win2=Tk()
+    win2.geometry('318x346')
+    win2.title('Tic Tac Toe')
+    win2.configure(background='yellow')
+    play=Button(win2,text='Play',command=buttons,height=2,width=10,fg='white',bg='red')
+    ins=Button(win2,text='Help',command=instructions,height=2,width=10,fg='white',bg='red')
+    icon=PhotoImage(file='images/Tic.gif')
+    pic=Label(win2,image=icon)
+    pic.image=icon
+    empty=Label(win2,text='',bg='yellow')
+    empty.pack()
+    pic.pack()
+    empty=Label(win2,text='',bg='yellow')
+    empty.pack()
+    play.pack()
+    ins.pack()
+def instructions():
+    messagebox.showinfo('Instructions','It is a single player game. Start by clicking on one of the boxes, an "X" will be positioned at that box and enjoy the game!  (game developed by Usama Ejaz)')
+def end():
+        global check
+        if button[0]['text']=='X' and button[1]['text']=='X' and button[2]['text']=='X':
+            check=True
+        if button[0]['text']=='X' and button[4]['text']=='X' and button[8]['text']=='X':
+            check=True
+        if button[0]['text']=='X' and button[3]['text']=='X' and button[6]['text']=='X':
+            check=True
+        if button[1]['text']=='X' and button[4]['text']=='X' and button[7]['text']=='X':
+            check=True
+        if button[2]['text']=='X' and button[4]['text']=='X' and button[6]['text']=='X':
+            check=True
+        if button[3]['text']=='X' and button[4]['text']=='X' and button[5]['text']=='X':
+            check=True
+        if button[6]['text']=='X' and button[7]['text']=='X' and button[8]['text']=='X':
+            check=True
+        if button[2]['text']=='X' and button[5]['text']=='X' and button[8]['text']=='X':
+            check=True
+        check1=0
+        for k in range(9):
+            if button[k]['text']!='':
+                check1+=1
+            if check1==10:
+                check=True
+        if check:
+            messagebox.showinfo('Game over',"The end !! (Game developed by Usama Ejaz)")            
+def buttons():
+    global win2
+    win2.destroy()
+    win=Tk()
+    win.geometry('350x348')
+    n=0 ; m=0 
+    def B1():
+        global i
+        if button[1]['text']!='X' and button[1]['text']!='O':
+            button[1]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
 
 
+    def B2():
+        global i
+        if button[2]['text']!='X' and button[2]['text']!='O':
+            button[2]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
 
 
-
-    def click(self, event):
-        grid_position = [event.x, event.y]
-        logical_position = self.convert_grid_to_logical_position(grid_position)
-
-        if not self.reset_board:
-            if self.player_X_turns:
-                if not self.is_grid_occupied(logical_position):
-                    self.draw_X(logical_position)
-                    self.board_status[logical_position[0]][logical_position[1]] = -1
-                    self.player_X_turns = not self.player_X_turns
-            else:
-                if not self.is_grid_occupied(logical_position):
-                    self.draw_O(logical_position)
-                    self.board_status[logical_position[0]][logical_position[1]] = 1
-                    self.player_X_turns = not self.player_X_turns
-
-            # Check if game is concluded
-            if self.is_gameover():
-                self.display_gameover()
-                # print('Done')
-        else:  # Play Again
-            self.canvas.delete("all")
-            self.play_again()
-            self.reset_board = False
+    def B3():
+        global i
+        if button[3]['text']!='X' and button[3]['text']!='O':
+            button[3]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
 
 
-game_instance = Tic_Tac_Toe()
-game_instance.mainloop()
+    def B4():
+        global i
+        if button[4]['text']!='X' and button[4]['text']!='O':
+            button[4]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
+
+
+    def B5():
+        global i
+        if button[5]['text']!='X' and button[5]['text']!='O':
+            button[5]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
+
+
+    def B6():
+        global i
+        if button[6]['text']!='X' and button[6]['text']!='O':
+            button[6]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
+    def B7():
+        global i
+        if button[7]['text']!='X' and button[7]['text']!='O':
+            button[7]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
+    def B8():
+        global i
+        if button[8]['text']!='X' and button[8]['text']!='O':
+            button[8]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
+    def B0():
+        global i
+        if button[0]['text']!='X' and button[0]['text']!='O':
+            button[0]['text']='X'
+            end()
+            con()
+            button[i]['text']='O'
+    for i in range(9):
+        if m==3:
+            m=0
+            n+=1
+        button.append(Button(win,text='',height=3,width=6,fg='red',font="Verdana 19 bold",bg='black'))
+        button[i].grid(row=n , column=m)
+        m=m+1
+    button[0]['command']=B0
+    button[1]['command']=B1
+    button[2]['command']=B2
+    button[3]['command']=B3
+    button[4]['command']=B4
+    button[5]['command']=B5
+    button[6]['command']=B6
+    button[7]['command']=B7
+    button[8]['command']=B8
+
+def con():
+    global i
+    global x
+    while True:
+        nums.append(i)
+        i=random.randint(0,8)  
+        if not(i in nums) and button[i]['text']!='O' and button[i]['text']!='X':
+            break
+menu()
+
