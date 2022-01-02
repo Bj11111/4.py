@@ -1,163 +1,175 @@
-#--------------------Game developed by USAMA EJAZ-----------------------
-#-------------------------For Open Use----------------------------
-
-from tkinter import *
+# This script is... less than ideal.
+# It was cobbled together just to one-off generate the tictactoe.py file.
+# This is a Python 3 script which generates a Python 3 script.
+# Seriously, this code is not at all polished and I tinkered with it for a couple hours just to get it to output right. That did not improve things, code readability-wise.
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logging.disable(logging.CRITICAL)
+import copy
 import random
-from tkinter import messagebox
-x=0
-i=100
-nums=[]
-button=[]
-check=False
-win2=2
-def menu():
-    global win2
-    win2=Tk()
-    win2.geometry('318x346')
-    win2.title('Tic Tac Toe')
-    win2.configure(background='yellow')
-    play=Button(win2,text='Play',command=buttons,height=2,width=10,fg='white',bg='red')
-    ins=Button(win2,text='Help',command=instructions,height=2,width=10,fg='white',bg='red')
-    icon=PhotoImage(file='images/Tic.gif')
-    pic=Label(win2,image=icon)
-    pic.image=icon
-    empty=Label(win2,text='',bg='yellow')
-    empty.pack()
-    pic.pack()
-    empty=Label(win2,text='',bg='yellow')
-    empty.pack()
-    play.pack()
-    ins.pack()
-def instructions():
-    messagebox.showinfo('Instructions','It is a single player game. Start by clicking on one of the boxes, an "X" will be positioned at that box and enjoy the game!  (game developed by Usama Ejaz)')
-def end():
-        global check
-        if button[0]['text']=='X' and button[1]['text']=='X' and button[2]['text']=='X':
-            check=True
-        if button[0]['text']=='X' and button[4]['text']=='X' and button[8]['text']=='X':
-            check=True
-        if button[0]['text']=='X' and button[3]['text']=='X' and button[6]['text']=='X':
-            check=True
-        if button[1]['text']=='X' and button[4]['text']=='X' and button[7]['text']=='X':
-            check=True
-        if button[2]['text']=='X' and button[4]['text']=='X' and button[6]['text']=='X':
-            check=True
-        if button[3]['text']=='X' and button[4]['text']=='X' and button[5]['text']=='X':
-            check=True
-        if button[6]['text']=='X' and button[7]['text']=='X' and button[8]['text']=='X':
-            check=True
-        if button[2]['text']=='X' and button[5]['text']=='X' and button[8]['text']=='X':
-            check=True
-        check1=0
-        for k in range(9):
-            if button[k]['text']!='':
-                check1+=1
-            if check1==10:
-                check=True
-        if check:
-            messagebox.showinfo('Game over',"The end !! (Game developed by Usama Ejaz)")            
-def buttons():
-    global win2
-    win2.destroy()
-    win=Tk()
-    win.geometry('350x348')
-    n=0 ; m=0 
-    def B1():
-        global i
-        if button[1]['text']!='X' and button[1]['text']!='O':
-            button[1]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
+boardTemplate = """print('%s|%s|%s\\n-+-+-\\n%s|%s|%s\\n-+-+-\\n%s|%s|%s\\n')"""
+enterMoveMessage = """print('Enter the number of your move:')
+print('  789\\n  456\\n  123')"""
+'''
+boardTemplate = """print('   |   |   ')
+print(' %s | %s | %s ')
+print('   |   |   ')
+print('---+---+---')
+print('   |   |   ')
+print(' %s | %s | %s ')
+print('   |   |   ')
+print('---+---+---')
+print('   |   |   ')
+print(' %s | %s | %s ')
+print('   |   |   \\n')
+"""
+enterMoveMessage = """print('Enter the number of your move:')
+print('  7|8|9')
+print('  -+-+-')
+print('  4|5|6')
+print('  -+-+-')
+print('  1|2|3')"""
+'''
+# ===== start of copy-pasted tic tac toe code =======================
+def isWinner(bo, le):
+    # Given a board and a player's letter, this function returns True if that player has won.
+    # We use bo instead of board and le instead of letter so we don't have to type as much.
+    return ((bo[7] == le and bo[8] == le and bo[9] == le) or # across the top
+    (bo[4] == le and bo[5] == le and bo[6] == le) or # across the middle
+    (bo[1] == le and bo[2] == le and bo[3] == le) or # across the bottom
+    (bo[7] == le and bo[4] == le and bo[1] == le) or # down the left side
+    (bo[8] == le and bo[5] == le and bo[2] == le) or # down the middle
+    (bo[9] == le and bo[6] == le and bo[3] == le) or # down the right side
+    (bo[7] == le and bo[5] == le and bo[3] == le) or # diagonal
+    (bo[9] == le and bo[5] == le and bo[1] == le)) # diagonal
+def isSpaceFree(board, move):
+    # Return true if the passed move is free on the passed board.
+    return board[move] == ' '
+def chooseRandomMoveFromList(board, movesList):
+    # Returns a valid move from the passed list on the passed board.
+    # Returns None if there is no valid move.
+    possibleMoves = []
+    for i in movesList:
+        if isSpaceFree(board, i):
+            possibleMoves.append(i)
+    if len(possibleMoves) != 0:
+        return random.choice(possibleMoves)
+    else:
+        return None
+def getComputerMove(board, computerLetter):
+    # Given a board and the computer's letter, determine where to move and return that move.
+    if computerLetter == 'X':
+        playerLetter = 'O'
+    else:
+        playerLetter = 'X'
+    # Here is our algorithm for our Tic Tac Toe AI:
+    # First, check if we can win in the next move
+    for i in range(1, 10):
+        boardCopy = copy.copy(board)
+        if isSpaceFree(boardCopy, i):
+            boardCopy[i] = computerLetter
+            if isWinner(boardCopy, computerLetter):
+                return i
+    # Check if the player could win on their next move, and block them.
+    for i in range(1, 10):
+        boardCopy = copy.copy(board)
+        if isSpaceFree(boardCopy, i):
+            boardCopy[i] = playerLetter
+            if isWinner(boardCopy, playerLetter):
+                return i
+    # Try to take one of the corners, if they are free.
+    move = chooseRandomMoveFromList(board, [1, 3, 7, 9])
+    if move != None:
+        return move
+    # Try to take the center, if it is free.
+    if isSpaceFree(board, 5):
+        return 5
+    # Move on one of the sides.
+    return chooseRandomMoveFromList(board, [2, 4, 6, 8])
+def isBoardFull(board):
+    # Return True if every space on the board has been taken. Otherwise return False.
+    for i in range(1, 10):
+        if isSpaceFree(board, i):
+            return False
+    return True
+# ===== end of copy-pasted tic tac toe code =======================
+allComputerMoveMessages = ['',
+"print('O moves on the bottom-left space.')",
+"print('O moves on the bottom-center space.')",
+"print('O moves on the bottom-right space.')",
+"print('O moves on the left space.')",
+"print('O moves on the center space.')",
+"print('O moves on the right space.')",
+"print('O moves on the top-left space.')",
+"print('O moves on the top-center space.')",
+"print('O moves on the top-right space.')",
+]
+def getPrintedBoard(board, indent):
+    printedBoard = boardTemplate % (board[7], board[8], board[9], board[4], board[5], board[6], board[1], board[2], board[3])
+    printedBoard = printedBoard.replace('\n', '\n' + ('    ' * indent))
+    printedBoard = ('    ' * indent) + printedBoard # add indent to first line
+    return printedBoard
+def getPrintedMoveMessage(indent):
+    printedMessage = enterMoveMessage .replace('\n', '\n' + ('    ' * indent))
+    printedMessage = ('    ' * indent) + printedMessage # add indent to first line
+    return printedMessage
+def printMove(originalBoard, indent=0):
+    for move in range(1, 10):
+        board = copy.copy(originalBoard)
+        if not isSpaceFree(board, move):
+            logging.debug('skipping %s' % (move))
+            continue
+        print('    ' * indent + "if move == '%s':" % (move))
+        #if computerMoveMsg != '':
+        #    print('    ' * (indent+1) + computerMoveMsg)
+        #import pdb; pdb.set_trace()
+        #print(getPrintedBoard(board, indent))
+        logging.debug('moving on %s' % (move))
+        board[move] = 'X'
+        if isWinner(board, 'X'):
+            print(getPrintedBoard(board, (indent+1)))
+            print('    ' * (indent+1) + "print('You have won!')")
+            print('    ' * (indent+1) + "sys.exit()")
+            continue
+        if isBoardFull(board):
+            logging.debug('board full')
+            print(getPrintedBoard(board, (indent+1)))
+            print('    ' * (indent+1) + "print('It\\'s a tie!')")
+            print('    ' * (indent+1) + "sys.exit()")
+            continue
+        compMove = getComputerMove(board, 'O')
+        board[compMove] = 'O'
+        if isWinner(board, 'O'):
+            print('    ' * (indent+1) + allComputerMoveMessages[compMove])
+            print(getPrintedBoard(board, (indent+1)))
+            print('    ' * (indent+1) + "print('The computer wins!')")
+            print('    ' * (indent+1) + "sys.exit()")
+            continue
+        print('    ' * (indent+1) + allComputerMoveMessages[compMove])
+        print(getPrintedBoard(board, indent + 1))
+        print(getPrintedMoveMessage(indent + 1))
+        print('    ' * (indent+1) + "move = input()\n")
+        #printMove(copy.copy(board), indent + 1, allComputerMoveMessages[compMove])
+        printMove(copy.copy(board), indent + 1)
 
 
-    def B2():
-        global i
-        if button[2]['text']!='X' and button[2]['text']!='O':
-            button[2]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
+print('import sys')
+print('if sys.version_info[0] == 2:')
+print('    input = raw_input # python 2 compatibility')
+print("print('Welcome to Tic Tac Toe!')")
+print("print('You are X.\\n')")
+print('''# My first tic-tac-toe program, by Al Sweigart al@inventwithpython.com
+# This sure was a lot of typing, but I finally finished it!
+# (This is a joke program.)
+import sys
+if sys.version_info[0] == 2:
+    input = raw_input # python 2 compatibility
+print('Welcome to Tic Tac Toe!')
+print('You are X.\\n')
+''')
 
-
-    def B3():
-        global i
-        if button[3]['text']!='X' and button[3]['text']!='O':
-            button[3]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-
-
-    def B4():
-        global i
-        if button[4]['text']!='X' and button[4]['text']!='O':
-            button[4]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-
-
-    def B5():
-        global i
-        if button[5]['text']!='X' and button[5]['text']!='O':
-            button[5]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-
-
-    def B6():
-        global i
-        if button[6]['text']!='X' and button[6]['text']!='O':
-            button[6]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-    def B7():
-        global i
-        if button[7]['text']!='X' and button[7]['text']!='O':
-            button[7]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-    def B8():
-        global i
-        if button[8]['text']!='X' and button[8]['text']!='O':
-            button[8]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-    def B0():
-        global i
-        if button[0]['text']!='X' and button[0]['text']!='O':
-            button[0]['text']='X'
-            end()
-            con()
-            button[i]['text']='O'
-    for i in range(9):
-        if m==3:
-            m=0
-            n+=1
-        button.append(Button(win,text='',height=3,width=6,fg='red',font="Verdana 19 bold",bg='black'))
-        button[i].grid(row=n , column=m)
-        m=m+1
-    button[0]['command']=B0
-    button[1]['command']=B1
-    button[2]['command']=B2
-    button[3]['command']=B3
-    button[4]['command']=B4
-    button[5]['command']=B5
-    button[6]['command']=B6
-    button[7]['command']=B7
-    button[8]['command']=B8
-
-def con():
-    global i
-    global x
-    while True:
-        nums.append(i)
-        i=random.randint(0,8)  
-        if not(i in nums) and button[i]['text']!='O' and button[i]['text']!='X':
-            break
-menu()
+board = [' '] * 10
+print(getPrintedBoard(board, 0))
+print(getPrintedMoveMessage(0))
+print("move = input()\n")
+printMove(board, 0)
